@@ -1,6 +1,7 @@
 {
   "name": "learn-vscode-extension",
   "displayName": "Learn VSCode Extension",
+  "repository": "git@github.com:hehe1111/learn-vscode-extension.git",
   "description": "A VSCode extension for learning purposes with command palette and context menu support",
   "version": "0.0.1",
   "engines": {
