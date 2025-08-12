@@ -4,7 +4,8 @@
   "description": "A VSCode extension for learning purposes with command palette and context menu support",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.74.0",
+    "node": ">=22"
   },
   "categories": [
     "Other"
