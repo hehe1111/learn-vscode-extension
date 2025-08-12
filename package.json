@@ -33,7 +33,8 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "pretest": "pnpm lint"
+    "pretest": "pnpm lint",
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/vscode": "^1.74.0",
