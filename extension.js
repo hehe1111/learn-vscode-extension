@@ -50,9 +50,31 @@ function activate(context) {
     }
   )
 
+  // 注册在浏览器中编辑命令
+  let editInBrowserDisposable = vscode.commands.registerCommand(
+    'learn-vscode-extension.editInBrowser',
+    async (uri) => {
+      try {
+        // 检查文件扩展名
+        const fileExtension = uri.fsPath.toLowerCase().split('.').pop()
+        
+        if (fileExtension === 'json') {
+          // 如果是json文件，显示全局提示
+          vscode.window.showInformationMessage('你点击了在浏览器中编辑')
+        } else {
+          // 如果不是json文件，显示警告提示
+          vscode.window.showWarningMessage('这不是一个json文件')
+        }
+      } catch (error) {
+        vscode.window.showErrorMessage(`处理文件时出错: ${error.message}`)
+      }
+    }
+  )
+
   // 将命令添加到上下文中，以便在扩展停用时正确释放
   context.subscriptions.push(commandPaletteDisposable)
   context.subscriptions.push(contextMenuDisposable)
+  context.subscriptions.push(editInBrowserDisposable)
 
   // 显示扩展激活成功的提示
   vscode.window.showInformationMessage(

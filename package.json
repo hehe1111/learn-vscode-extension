@@ -22,13 +22,22 @@
       {
         "command": "learn-vscode-extension.showInputContextMenu",
         "title": "learn-vscode"
+      },
+      {
+        "command": "learn-vscode-extension.editInBrowser",
+        "title": "在浏览器中编辑 JSON"
       }
     ],
     "menus": {
       "editor/context": [
         {
           "command": "learn-vscode-extension.showInputContextMenu",
-          "group": "1_modification"
+          "group": "learn_vscode_extension_group"
+        },
+        {
+          "command": "learn-vscode-extension.editInBrowser",
+          "when": "resourceExtname == .json",
+          "group": "learn_vscode_extension_group"
         }
       ]
     }
