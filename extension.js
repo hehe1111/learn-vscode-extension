@@ -61,8 +61,8 @@ function activate(context) {
         const fileExtension = uri.fsPath.toLowerCase().split('.').pop()
 
         if (fileExtension === 'json') {
-          // 如果是json文件，启动Express服务器
-          await startExpressServer()
+          // 如果是json文件，启动Express服务器并传递文件路径
+          await startExpressServer(uri.fsPath)
         } else {
           // 如果不是json文件，显示警告提示
           vscode.window.showWarningMessage('这不是一个json文件')
@@ -86,17 +86,18 @@ function activate(context) {
 
 /**
  * 启动Express服务器
+ * @param {string} jsonFilePath - JSON文件路径
  */
-async function startExpressServer() {
+async function startExpressServer(jsonFilePath) {
   try {
     // 创建一个新的终端
     const terminal = vscode.window.createTerminal('Express Server')
 
     // 获取当前扩展的路径
     const extensionPath = path.dirname(__filename)
-
-    // 在终端中启动服务器
-    terminal.sendText(`cd "${extensionPath}" && node server.js`)
+    
+    // 在终端中直接启动 server.js，传递 JSON 文件路径作为参数
+    terminal.sendText(`cd "${extensionPath}" && node server.js "${jsonFilePath}"`)
     terminal.show()
 
     // 等待服务器启动，然后打开浏览器
