@@ -1,4 +1,6 @@
 const vscode = require('vscode')
+const path = require('path')
+const fs = require('fs')
 
 /**
  * 显示输入框并处理用户输入
@@ -57,10 +59,10 @@ function activate(context) {
       try {
         // 检查文件扩展名
         const fileExtension = uri.fsPath.toLowerCase().split('.').pop()
-        
+
         if (fileExtension === 'json') {
-          // 如果是json文件，显示全局提示
-          vscode.window.showInformationMessage('你点击了在浏览器中编辑')
+          // 如果是json文件，启动Express服务器
+          await startExpressServer()
         } else {
           // 如果不是json文件，显示警告提示
           vscode.window.showWarningMessage('这不是一个json文件')
@@ -80,6 +82,29 @@ function activate(context) {
   vscode.window.showInformationMessage(
     'learn-vscode-extension 扩展已成功激活！'
   )
+}
+
+/**
+ * 启动Express服务器
+ */
+async function startExpressServer() {
+  try {
+    // 创建一个新的终端
+    const terminal = vscode.window.createTerminal('Express Server')
+
+    // 获取当前扩展的路径
+    const extensionPath = path.dirname(__filename)
+
+    // 在终端中启动服务器
+    terminal.sendText(`cd "${extensionPath}" && node server.js`)
+    terminal.show()
+
+    // 提示用户服务器已启动
+    vscode.window.showInformationMessage('Express服务器已启动，访问 http://localhost:8080 查看内容')
+
+  } catch (error) {
+    vscode.window.showErrorMessage(`启动服务器失败: ${error.message}`)
+  }
 }
 
 /**

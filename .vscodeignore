@@ -8,3 +8,10 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+note/
+ai prompts/
+.claude/
+task.md
+*.lock
+*error
+*.log
