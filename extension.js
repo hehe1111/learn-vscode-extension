@@ -99,8 +99,13 @@ async function startExpressServer() {
     terminal.sendText(`cd "${extensionPath}" && node server.js`)
     terminal.show()
 
+    // 等待服务器启动，然后打开浏览器
+    setTimeout(() => {
+      vscode.env.openExternal(vscode.Uri.parse('http://localhost:8080'))
+    }, 1000)
+
     // 提示用户服务器已启动
-    vscode.window.showInformationMessage('Express服务器已启动，访问 http://localhost:8080 查看内容')
+    vscode.window.showInformationMessage('Express服务器已启动，正在打开浏览器访问 http://localhost:8080')
 
   } catch (error) {
     vscode.window.showErrorMessage(`启动服务器失败: ${error.message}`)
