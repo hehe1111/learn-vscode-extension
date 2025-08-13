@@ -56,6 +56,17 @@
         .save-button:hover {
             background: #005a9e;
         }
+        .status {
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
+        }
+        .connected {
+            color: green;
+        }
+        .disconnected {
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -63,53 +74,129 @@
         <h1>hello from express server by vscode plugin</h1>
 
         <div class="info">
-            <strong>当前正在编辑的 JSON 文件内容：</strong>
+            <div>
+                <strong>当前正在编辑的 JSON 文件内容：</strong>
+                <span id="status" class="status disconnected">未连接</span>
+            </div>
             <button class="save-button" onclick="saveJSON()">保存</button>
         </div>
 
         <textarea id="jsonEditor" class="json-editor" placeholder="正在加载 JSON 文件内容..."><%= jsonContent %></textarea>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // 页面加载时格式化 JSON 内容
-        document.addEventListener('DOMContentLoaded', function() {
+        let socket;
+        let isConnected = false;
+
+        // 初始化 WebSocket 连接
+        function initWebSocket() {
+            socket = io();
+
+            socket.on('connect', () => {
+                console.log('已连接到服务器');
+                isConnected = true;
+                updateStatus('已连接', 'connected');
+            });
+
+            socket.on('disconnect', () => {
+                console.log('已断开连接');
+                isConnected = false;
+                updateStatus('未连接', 'disconnected');
+            });
+
+            // 接收文件内容
+            socket.on('file-content', (content) => {
+                console.log('收到文件内容');
+                loadContent(content);
+            });
+
+            // 接收文件变化通知
+            socket.on('file-changed', (content) => {
+                console.log('收到文件变化通知');
+                localStorage.setItem('jsonContent', content);
+                alert('本地 JSON 文件内容有变动，请刷新页面');
+            });
+
+            // 保存成功
+            socket.on('save-success', () => {
+                alert('保存成功！');
+            });
+
+            // 保存失败
+            socket.on('save-error', (error) => {
+                alert('保存失败：' + error);
+            });
+        }
+
+        // 更新连接状态显示
+        function updateStatus(text, className) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = text;
+            statusEl.className = 'status ' + className;
+        }
+
+        // 加载内容到编辑器
+        function loadContent(content) {
             const textarea = document.getElementById('jsonEditor');
+
+            // 检查是否有本地存储的内容
+            const savedContent = localStorage.getItem('jsonContent');
+            if (savedContent) {
+                textarea.value = savedContent;
+                // 清除本地存储，避免状态残留
+                localStorage.removeItem('jsonContent');
+                console.log('从localStorage加载内容');
+            } else {
+                textarea.value = content;
+                console.log('从服务器加载内容');
+            }
+
+            // 格式化 JSON 内容
             try {
-                const content = textarea.value;
-                if (content.trim()) {
-                    const parsed = JSON.parse(content);
+                if (textarea.value.trim()) {
+                    const parsed = JSON.parse(textarea.value);
                     textarea.value = JSON.stringify(parsed, null, 2);
                 }
             } catch (e) {
                 // 如果不是有效的 JSON，保持原样
                 console.log('内容不是有效的 JSON 格式');
             }
-        });
+        }
 
         // 保存按钮点击事件
         function saveJSON() {
-            const textarea = document.getElementById('jsonEditor');
-            const jsonContent = textarea.value;
+            if (!isConnected) {
+                alert('未连接到服务器，无法保存');
+                return;
+            }
 
-            fetch('/saveJson', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ content: jsonContent })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('保存成功！');
-                } else {
-                    alert('保存失败：' + (data.error || '未知错误'));
+            const textarea = document.getElementById('jsonEditor');
+            let jsonContent = textarea.value;
+            // 格式化 JSON 内容
+            try {
+                if (jsonContent.trim()) {
+                    const parsed = JSON.parse(jsonContent);
+                    jsonContent = JSON.stringify(parsed, null, 2);
                 }
-            })
-            .catch(error => {
-                alert('保存失败：' + error.message);
-            });
+            } catch (e) {
+                // 如果不是有效的 JSON，保持原样
+                console.log('内容不是有效的 JSON 格式');
+            }
+
+            socket.emit('save-file', jsonContent);
         }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initWebSocket();
+        });
+
+        // 刷新页面时处理
+        window.addEventListener('beforeunload', () => {
+            // 如果页面刷新，清除localStorage中的内容
+            localStorage.removeItem('jsonContent');
+        });
     </script>
 </body>
 </html>
