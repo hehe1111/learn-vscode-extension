@@ -1,0 +1,21 @@
+{
+  "name": "测试JSON文件",
+  "version": "1.0.0",
+  "description": "这是一个用于测试WebSocket功能的JSON文件",
+  "items": [
+    {
+      "id": 1,
+      "name": "项目1225",
+      "completed": false
+    },
+    {
+      "id": 2,
+      "name": "项目2",
+      "completed": true
+    }
+  ],
+  "config": {
+    "theme": "dark",
+    "language": "zh-CN"
+  }
+}
