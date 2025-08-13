@@ -97,7 +97,18 @@ if (jsonFilePath) {
   console.log('正在监控文件变化:', jsonFilePath)
 }
 
-// 启动服务器
+// 启动服务器，检查端口占用情况
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`错误：端口 ${port} 已被占用！`)
+    console.error('请关闭占用该端口的服务或更换端口后重试。')
+    process.exit(1) // 直接终止进程
+  } else {
+    console.error('服务器启动失败:', error.message)
+    process.exit(1)
+  }
+})
+
 server.listen(port, () => {
   console.log(`Express服务器已启动，访问 http://localhost:${port} 查看内容`)
   if (jsonFilePath) {
