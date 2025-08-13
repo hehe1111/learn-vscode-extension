@@ -28,6 +28,23 @@ app.get('/', (req, res) => {
   res.render('index', { jsonContent })
 })
 
+// 保存JSON文件的接口
+app.use(express.json())
+app.post('/saveJson', (req, res) => {
+  const { content } = req.body
+
+  if (!jsonFilePath) {
+    return res.json({ success: false, error: '未指定JSON文件路径' })
+  }
+
+  try {
+    fs.writeFileSync(jsonFilePath, content, 'utf8')
+    res.json({ success: true })
+  } catch (error) {
+    res.json({ success: false, error: error.message })
+  }
+})
+
 // 启动服务器
 app.listen(port, () => {
   console.log(`Express服务器已启动，访问 http://localhost:${port} 查看内容`)
