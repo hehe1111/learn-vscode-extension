@@ -100,6 +100,7 @@ async function startExpressServer(jsonFilePath) {
     terminal.sendText(`cd "${extensionPath}" && node server.js "${jsonFilePath}"`)
     terminal.show()
 
+    // FIXME: 需要根据上面第 100 行命令的运行结果，来决定是否自动打开浏览器。场景：8080 端口被占用的场景下，会导致本地服务器无法在 8080 端口启动，此时不应该自动打开浏览器
     // 等待服务器启动，然后打开浏览器
     setTimeout(() => {
       vscode.env.openExternal(vscode.Uri.parse('http://localhost:8080'))
