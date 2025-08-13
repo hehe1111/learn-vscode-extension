@@ -12,7 +12,7 @@ const io = socketIo(server, {
     methods: ["GET", "POST"]
   }
 })
-const port = 8080
+const port = process.argv[3] ? parseInt(process.argv[3]) : 8765
 
 // 从命令行参数获取 JSON 文件路径
 const jsonFilePath = process.argv[2]
@@ -43,29 +43,29 @@ app.use(express.static(process.cwd()))
 // WebSocket 连接处理
 io.on('connection', (socket) => {
   console.log('客户端已连接:', socket.id)
-  
+
   // 发送当前文件内容给新连接的客户端
   socket.emit('file-content', jsonContent)
-  
+
   // 监听客户端保存文件请求
   socket.on('save-file', (content) => {
     if (!jsonFilePath) {
       socket.emit('save-error', '未指定JSON文件路径')
       return
     }
-    
+
     try {
       fs.writeFileSync(jsonFilePath, content, 'utf8')
       jsonContent = content
       socket.emit('save-success')
-      
+
       // 广播给所有客户端文件已更新
       io.emit('file-updated', content)
     } catch (error) {
       socket.emit('save-error', error.message)
     }
   })
-  
+
   // 断开连接处理
   socket.on('disconnect', () => {
     console.log('客户端已断开连接:', socket.id)
@@ -78,7 +78,7 @@ if (jsonFilePath) {
     persistent: true,
     ignoreInitial: true
   })
-  
+
   watcher.on('change', () => {
     console.log('检测到文件变化:', jsonFilePath)
     try {
@@ -93,20 +93,14 @@ if (jsonFilePath) {
       io.emit('file-error', error.message)
     }
   })
-  
+
   console.log('正在监控文件变化:', jsonFilePath)
 }
 
 // 启动服务器，检查端口占用情况
 server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`错误：端口 ${port} 已被占用！`)
-    console.error('请关闭占用该端口的服务或更换端口后重试。')
-    process.exit(1) // 直接终止进程
-  } else {
-    console.error('服务器启动失败:', error.message)
-    process.exit(1)
-  }
+  console.error('服务器启动失败:', error.message)
+  process.exit(1)
 })
 
 server.listen(port, () => {
