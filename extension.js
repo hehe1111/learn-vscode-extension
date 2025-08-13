@@ -85,29 +85,118 @@ function activate(context) {
 }
 
 /**
+ * 查找可用端口
+ * @param {number} startPort - 起始端口号
+ * @returns {Promise<number>} - 返回可用端口号
+ */
+async function findAvailablePort(startPort) {
+  const net = require('net')
+
+  return new Promise((resolve, reject) => {
+    let port = startPort
+
+    const checkPort = () => {
+      const client = net.createConnection({ port });
+
+      client.on('connect', () => {
+        // 能连接上，说明端口被占用了，需要 +1 继续找没被占用的端口
+        client.end(); // 关闭连接
+        port++
+        if (port > 65535) {
+          reject(new Error('没有找到可用的端口'))
+        } else {
+          checkPort()
+        }
+      });
+
+      client.on('error', () => {
+        // 连接失败，说明端口未被占用
+        resolve(port)
+      });
+    }
+
+    checkPort()
+  })
+}
+
+/**
  * 启动Express服务器
  * @param {string} jsonFilePath - JSON文件路径
  */
 async function startExpressServer(jsonFilePath) {
   try {
+    // 查找可用端口，从8765开始
+    const startPort = 8765
+    const availablePort = await findAvailablePort(startPort)
+
     // 创建一个新的终端
     const terminal = vscode.window.createTerminal('Express Server')
 
     // 获取当前扩展的路径
     const extensionPath = path.dirname(__filename)
-    
-    // 在终端中直接启动 server.js，传递 JSON 文件路径作为参数
-    terminal.sendText(`cd "${extensionPath}" && node server.js "${jsonFilePath}"`)
+
+    // 在终端中启动 server.js，传递 JSON 文件路径和端口号作为参数
+    terminal.sendText(`cd "${extensionPath}" && node server.js "${jsonFilePath}" ${availablePort}`)
     terminal.show()
 
-    // FIXME: 需要根据上面第 100 行命令的运行结果，来决定是否自动打开浏览器。场景：8080 端口被占用的场景下，会导致本地服务器无法在 8080 端口启动，此时不应该自动打开浏览器
-    // 等待服务器启动，然后打开浏览器
-    setTimeout(() => {
-      vscode.env.openExternal(vscode.Uri.parse('http://localhost:8080'))
-    }, 1000)
+    // 提示用户服务器正在启动
+    vscode.window.showInformationMessage(`正在启动Express服务器，使用端口 ${availablePort}...`)
 
-    // 提示用户服务器已启动
-    vscode.window.showInformationMessage('Express服务器已启动，正在打开浏览器访问 http://localhost:8080')
+    // 等待服务器启动并检查是否成功
+    const maxAttempts = 20
+    let attempts = 0
+
+    const checkServer = async () => {
+      attempts++
+
+      if (attempts >= maxAttempts) {
+        vscode.window.showErrorMessage('服务器启动超时，请检查终端输出')
+        return
+      }
+
+      try {
+        // 使用 Node.js 内置 http 模块检查服务器状态
+        const http = require('http')
+
+        const options = {
+          hostname: 'localhost',
+          port: availablePort,
+          path: '/',
+          method: 'GET',
+          timeout: 2000
+        }
+
+        const req = http.request(options, (res) => {
+          if (res.statusCode === 200) {
+            // 服务器已成功启动，打开浏览器
+            vscode.env.openExternal(vscode.Uri.parse(`http://localhost:${availablePort}`))
+            vscode.window.showInformationMessage(`Express服务器已启动，正在打开浏览器访问 http://localhost:${availablePort}`)
+          } else {
+            // 状态码不是200，重试
+            setTimeout(checkServer, 500)
+          }
+        })
+
+        req.on('error', () => {
+          // 服务器还未启动，重试
+          setTimeout(checkServer, 500)
+        })
+
+        req.on('timeout', () => {
+          req.destroy()
+          setTimeout(checkServer, 500)
+        })
+
+        req.end()
+
+      } catch (error) {
+        // 检查失败，重试
+        setTimeout(checkServer, 500)
+      }
+    }
+
+    // 开始检查服务器状态
+    setTimeout(checkServer, 1000)
 
   } catch (error) {
     vscode.window.showErrorMessage(`启动服务器失败: ${error.message}`)
