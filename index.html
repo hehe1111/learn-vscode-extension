@@ -39,6 +39,22 @@
             border-radius: 4px;
             padding: 10px;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .save-button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .save-button:hover {
+            background: #005a9e;
         }
     </style>
 </head>
@@ -48,6 +64,7 @@
 
         <div class="info">
             <strong>当前正在编辑的 JSON 文件内容：</strong>
+            <button class="save-button" onclick="saveJSON()">保存</button>
         </div>
 
         <textarea id="jsonEditor" class="json-editor" placeholder="正在加载 JSON 文件内容..."><%= jsonContent %></textarea>
@@ -68,6 +85,11 @@
                 console.log('内容不是有效的 JSON 格式');
             }
         });
+
+        // 保存按钮点击事件
+        function saveJSON() {
+            alert('这是一个保存按钮');
+        }
     </script>
 </body>
 </html>
